@@ -70,6 +70,5 @@
     }
   },
   "definitions": {},
-  "securityDefinitions": {},
-  "host": "kvk5koj7u5.execute-api.eu-west-1.amazonaws.com/dev"
+  "securityDefinitions": {}
 };

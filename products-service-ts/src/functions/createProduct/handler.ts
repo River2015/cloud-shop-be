@@ -1,5 +1,5 @@
 import type { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
-import { formatJSONResponse } from '@libs/api-gateway';
+import {formatJSONResponse, responseError500} from '@libs/api-gateway';
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -30,10 +30,17 @@ const stockWriteDDBTable = async(data) => {
 
 const createProduct: ValidatedEventAPIGatewayProxyEvent<
     any
-    > = async (event) => {
+    > = async (event, context, callback) => {
     // @ts-ignore
     const payload = JSON.parse(event.body);
-    // error of empty data
+
+    if (!payload || !payload.price || !payload.title || !payload.count || !payload.description) {
+        callback(null, {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Product data is invalid.' })
+        });
+    }
     const id = uuidv4();
     const product = {
         id,
@@ -47,14 +54,12 @@ const createProduct: ValidatedEventAPIGatewayProxyEvent<
         count: payload.count
     }
 
-    const newProduct = await productWriteDDBTable(product).catch(err => {
-        console.log('error in dynamo write', err);
-        return null;
+    const newProduct = await productWriteDDBTable(product).catch((err) => {
+        return responseError500('error in dynamo write');
     });
 
-    const newStock = await stockWriteDDBTable(stock).catch(err => {
-        console.log('error in dynamo write', err);
-        return null;
+    const newStock = await stockWriteDDBTable(stock).catch((err) => {
+        return responseError500('error in dynamo write');
     });
 
    return formatJSONResponse(product);

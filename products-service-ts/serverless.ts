@@ -43,6 +43,9 @@ const serverlessConfiguration: AWS = {
       platform: 'node',
       concurrency: 10,
     },
+    autoswagger: {
+      host: 'mvg8btfnfa.execute-api.eu-west-1.amazonaws.com/dev'
+    },
     productTableName: 'products_table',
     stocksTableName: 'stocks_table',
   },

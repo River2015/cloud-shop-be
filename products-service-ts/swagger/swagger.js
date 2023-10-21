@@ -70,5 +70,6 @@
     }
   },
   "definitions": {},
-  "securityDefinitions": {}
+  "securityDefinitions": {},
+  "host": "mvg8btfnfa.execute-api.eu-west-1.amazonaws.com/dev"
 };

@@ -15,3 +15,27 @@ export const formatJSONResponse = (response: unknown) => {
     body: JSON.stringify(response)
   }
 }
+
+export const responseError400 = (massage) => {
+  return {
+    statusCode: 400,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": true,
+    },
+    body: JSON.stringify({ error: massage })
+  }
+}
+
+export const responseError500 = (massage) => {
+  return {
+    statusCode: 500,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": true,
+    },
+    body: JSON.stringify({ error: massage })
+  }
+}

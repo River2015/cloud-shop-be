@@ -1,52 +1,60 @@
+import {BUCKET, REGION} from '../../constants/common-constants'
+import {Handler} from "aws-lambda";
+import * as path from "path";
+import csvParser from "csv-parser";
+import * as AWS from "aws-sdk";
 
-import { middyfy } from '@libs/lambda';
-import * as AWS from 'aws-sdk';
+const s3 = new AWS.S3({ region: REGION });
 
-import csvParser from 'csv-parser';
-import { S3Event } from 'aws-lambda';
-import {BUCKET} from "../../constants/common-constants";
-import {formatJSONResponse} from "@libs/api-gateway";
-
-
-const s3 = new AWS.S3({ region: 'eu-west-1' });
-
-const importFileParser = async (event: S3Event) => {
+const importFileParser: Handler = async (event) => {
     try {
-        const results = [];
-
+        console.log("import file parser EVENT", event);
         for (const record of event.Records) {
-            console.log(record);
-            const fileName = record.s3.object.key;
-            const params = { Bucket: BUCKET, Key: fileName };
-            const movedFileOptions = {
-                Bucket: BUCKET,
-                CopySource: BUCKET + '/' + fileName,
-                Key: fileName.replace('uploaded', 'parsed'),
-            };
+            const objectName = record.s3.object.key;
+            if (objectName) {
+                const params = {
+                    Bucket: BUCKET,
+                    Key: objectName,
+                };
 
-            await new Promise<void>((resolve) => {
-                s3.getObject(params)
-                    .createReadStream()
-                    .pipe(
-                        csvParser({
-                            separator: ';',
-                            headers: ['Title', 'Description', 'Price', 'Count'],
-                        })
-                    )
-                    .on('data', (data) => results.push(data))
-                    .on('end', () => {
-                        console.log(results);
-                        resolve();
+                const parse = (stream) =>
+                    new Promise((_resolve, reject) => {
+                        stream.on("data", (data) => console.log("Record:", data));
+                        stream.on("error", (error) => {
+                            console.log(error);
+                            reject();
+                        });
+                        stream.on("end", async () => {
+                            console.log("Finish parsing CSV file");
+                            try {
+                                const copyParams = {
+                                    Bucket: BUCKET,
+                                    CopySource: `/${BUCKET}/${objectName}`,
+                                    Key: objectName.replace('uploaded', 'parsed'),
+                                };
+
+                                await s3.copyObject(copyParams).promise();
+
+                                const dstKey = path.join("parsed", path.basename(objectName));
+                                console.log(`File was copied to ${dstKey}`);
+
+                                await s3.deleteObject(params).promise();
+                                console.log(`File was deleted from ${objectName}`);
+
+                            } catch (err) {
+                                console.log(`Error copying or deleting file: ${err}`);
+                            }
+                        });
                     });
-            });
 
-            await s3.copyObject(movedFileOptions).promise();
-            await s3.deleteObject(params).promise();
+                const s3Stream = s3.getObject(params).createReadStream();
+
+                await parse(s3Stream.pipe(csvParser()));
+            }
         }
-        return formatJSONResponse(results, 200);
     } catch (err) {
-        return formatJSONResponse(err?.message, 500);
+        console.log('Something went wrong!')
     }
 };
 
-export const main = middyfy(importFileParser);
+export const main = importFileParser;

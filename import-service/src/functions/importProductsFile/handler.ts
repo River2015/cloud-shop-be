@@ -1,12 +1,10 @@
-import * as dotenv from 'dotenv';
 import { middyfy } from '@libs/lambda';
 import * as AWS from 'aws-sdk';
 import { APIGatewayProxyEvent } from 'aws-lambda';
-import { BUCKET } from '../../constants/common-constants'
+import {BUCKET, REGION} from '../../constants/common-constants'
+import {formatJSONResponse} from "@libs/api-gateway";
 
-dotenv.config();
-
-const s3 = new AWS.S3({ region: 'eu-west-1' });
+const s3 = new AWS.S3({ region: REGION });
 
 export const importProductsFile = async (event: APIGatewayProxyEvent) => {
     try {
@@ -17,23 +15,9 @@ export const importProductsFile = async (event: APIGatewayProxyEvent) => {
             ContentType: 'text/csv',
         };
         const uploadURL = await s3.getSignedUrlPromise('putObject', s3Params);
-        return {
-            statusCode: 200,
-            body: JSON.stringify(uploadURL),
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Credentials': true,
-            },
-        };
+        return formatJSONResponse(uploadURL, 200);
     } catch (err) {
-        return {
-            statusCode: 200,
-            body: JSON.stringify(err),
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Credentials': true,
-            },
-        };
+        return formatJSONResponse(err, 500)
     }
 };
 

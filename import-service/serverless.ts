@@ -1,6 +1,6 @@
 import type { AWS } from '@serverless/typescript';
 import {importFileParser, importProductsFile} from "@functions/index";
-import {BUCKET} from "./src/constants/common-constants";
+import {BUCKET, REGION} from "./src/constants/common-constants";
 
 const serverlessConfiguration: AWS = {
   service: 'import-service',
@@ -11,10 +11,10 @@ const serverlessConfiguration: AWS = {
     name: 'aws',
     runtime: 'nodejs16.x',
     stage: 'dev',
-    region: 'eu-west-1',
-    // httpApi: {
-    //   cors: true
-    // },
+    region: REGION,
+    httpApi: {
+      cors: true
+    },
     apiGateway: {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,

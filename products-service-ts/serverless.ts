@@ -2,7 +2,8 @@ import type { AWS } from '@serverless/typescript';
 
 import getProductsList from '@functions/getProductsList';
 import getProductById from '@functions/getProductById';
-import {createProduct} from "@functions/index";
+import createProduct from "@functions/createProduct";
+import catalogBatchProcess from "@functions/catalogBatchProcess";
 
 const serverlessConfiguration: AWS = {
   service: 'products-service-ts',
@@ -22,15 +23,28 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       PRODUCTS_TABLE: 'products_table',
       PRODUCTS_STOCK_TABLE: 'stocks_table',
+      SQS_URL: 'SQSQueue',
+      SNS_ARN: 'arn:aws:sns:eu-west-1:271763034164:createProductTopic'
     },
     iamRoleStatements: [{
       Effect: 'Allow',
       Action: ['dynamodb:*'],
       Resource: '*'
-    }],
+    },
+      {
+        Effect: 'Allow',
+        Action: ['sqs:*'],
+        Resource: '*'
+      },
+      {
+        Effect: 'Allow',
+        Action: ['sns:*'],
+        Resource: '*'
+      }
+    ],
   },
   // import the function via paths
-  functions: { getProductsList, getProductById, createProduct },
+  functions: { getProductsList, getProductById, createProduct, catalogBatchProcess },
   package: { individually: true },
   custom: {
     esbuild: {
@@ -85,6 +99,28 @@ const serverlessConfiguration: AWS = {
             ReadCapacityUnits: 3,
             WriteCapacityUnits: 3,
           },
+        }
+      },
+      SQSQueue: {
+        Type: 'AWS::SQS::Queue',
+        Properties: {
+          QueueName: 'catalogItemsQueue',
+        }
+      },
+      SNSTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'createProductTopic'
+        }
+      },
+      SNSSubscription: {
+        Type: 'AWS::SNS::Subscription',
+        Properties: {
+          Endpoint: 'uliaulia083@gmail.com',
+          Protocol: 'email',
+          TopicArn: {
+            Ref: "SNSTopic",
+          }
         }
       }
     }

@@ -19,13 +19,25 @@ const importFileParser: Handler = async (event) => {
 
                 const parse = (stream) =>
                     new Promise((_resolve, reject) => {
-                        stream.on("data", (data) => console.log("Record:", data));
+                        const sqs = new AWS.SQS();
+                        stream.on("data", (data) => {
+                            sqs.sendMessage({
+                                QueueUrl: 'https://sqs.eu-west-1.amazonaws.com/271763034164/catalogItemsQueue',
+                                MessageBody: JSON.stringify(data)
+                            },  (err, data) => {
+                                if (err) {
+                                    console.log("Error", err);
+                                } else {
+                                    console.log("Success", data.MessageId);
+                                }
+                            })
+                        });
                         stream.on("error", (error) => {
                             console.log(error);
                             reject();
                         });
                         stream.on("end", async () => {
-                            console.log("Finish parsing CSV file");
+                            console.log("CSV file parsing was finished");
                             try {
                                 const copyParams = {
                                     Bucket: BUCKET,
@@ -34,15 +46,13 @@ const importFileParser: Handler = async (event) => {
                                 };
 
                                 await s3.copyObject(copyParams).promise();
-
                                 const dstKey = path.join("parsed", path.basename(objectName));
                                 console.log(`File was copied to ${dstKey}`);
-
                                 await s3.deleteObject(params).promise();
                                 console.log(`File was deleted from ${objectName}`);
 
                             } catch (err) {
-                                console.log(`Error copying or deleting file: ${err}`);
+                                console.log(`ERROR in importFileParser of copying or deleting file: ${err}`);
                             }
                         });
                     });

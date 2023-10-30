@@ -34,6 +34,11 @@ const serverlessConfiguration: AWS = {
         Action: ['s3:*'],
         Resource: [`arn:aws:s3:::${BUCKET}/*`],
       },
+      {
+        Effect: 'Allow',
+        Action: ['sqs:*'],
+        Resource: '*'
+      }
     ],
   },
   // import the function via paths

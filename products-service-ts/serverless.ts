@@ -122,7 +122,20 @@ const serverlessConfiguration: AWS = {
             Ref: "SNSTopic",
           }
         }
-      }
+      // },
+      // SNSSubscriptionWithFilteredByTitle: {
+      //   Type: 'AWS::SNS::Subscription',
+      //   Properties: {
+      //     Endpoint: 'iulianna_stepanova@epam.com',
+      //     Protocol: 'email',
+      //     TopicArn: {
+      //       Ref: 'SNSTopic',
+      //     },
+      //     // FilterPolicy: {
+      //     //   Title: [{ prefix: 'title1' }],
+      //     // },
+      //   },
+      },
     }
   }
 }

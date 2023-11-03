@@ -1,8 +1,7 @@
-import type { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import {formatJSONResponse, responseError500} from '@libs/api-gateway';
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from 'uuid'
 
 const client = new DynamoDBClient({});
@@ -28,13 +27,11 @@ const stockWriteDDBTable = async(data) => {
   return response;
 }
 
-const createProduct: ValidatedEventAPIGatewayProxyEvent<
-    any
-    > = async (event, context, callback) => {
+export const createProduct = async (event, context, callback) => {
     // @ts-ignore
     const payload = JSON.parse(event.body);
 
-    if (!payload || !payload.price || !payload.title || !payload.count || !payload.description) {
+    if (!payload || !payload.Price || !payload.Title || !payload.Count || !payload.Description) {
         callback(null, {
             statusCode: 400,
             headers: { 'Content-Type': 'application/json' },
@@ -44,14 +41,14 @@ const createProduct: ValidatedEventAPIGatewayProxyEvent<
     const id = uuidv4();
     const product = {
         id,
-        title: payload.title,
-        description: payload.description,
-        price: payload.price,
+        title: payload.Title,
+        description: payload.Description,
+        price: payload.Price,
     }
 
     const stock = {
         product_id: id,
-        count: payload.count
+        count: payload.Count
     }
 
     const newProduct = await productWriteDDBTable(product).catch((err) => {
